@@ -1,6 +1,7 @@
 from random import shuffle
 from numpy import zeros, array, stack
 from datasets.cientista_compositor import cientista_e_compositores
+from statistics import mean
 def funcao_ativacao(x) -> int:
     """
     Como função de ativação foi escolhida a função degrau
@@ -15,7 +16,7 @@ class Neuronio:
     def ajusta_pesos(self, taxa_aprendizado, erro):
         novos_pesos = []
         for index, sinapse in enumerate(self.getSinapses()):
-            novos_pesos = sinapse + erro[index] * taxa_aprendizado * self.getX_i
+            novos_pesos = sinapse + erro[index] * taxa_aprendizado * self.getX_i()
         
         self.setSinapses(novos_pesos)
 
@@ -47,25 +48,29 @@ class RedeNeural:
     
     def treinar_rede(self, erro_conj_max, dataset):
         erro_conj_per = 100
-        erro_conj_array = []
         while erro_conj_max < erro_conj_per:
+            erro_conj_array = []
             shuffle(dataset)
             for sample in dataset:
                 self.insere_entrada(sample[0])
                 self.gera_saida()
                 # backpropagation
-                erro = array(sample[1] - self.getCamadaSaida()) # calculo de erro para backpropagation TODO
+                erro = array(array(sample[1]) - array([neuronio.getX_i() for neuronio in self.getCamadaSaida()])) # calculo de erro para backpropagation TODO
+                self.ajusta_peso_neuronios(erro)
+                erro_conj_array.append(mean(erro))
+            erro_conj_per = mean(erro_conj_array) * 100
                 
     
     def gera_saida(self):
         entradas = self.getCamadaEntrada()
         matriz_pesos =  stack([neuronio.getSinapses() for neuronio in entradas], axis=-1)
         vetor_valores_n = array([neuronio.getX_i() for neuronio in self.getCamadaEntrada()])
-        saida = matriz_pesos @ vetor_valores_n
+        saida = array(matriz_pesos @ vetor_valores_n)
         self.insere_saida(saida)
         
     def ajusta_peso_neuronios(self, erro):
-        pass # TODO 
+        for neuronio in self.getCamadaEntrada():
+            neuronio.ajusta_pesos(self.getTaxaAprendizado(), erro)
     
     def getCamadaEntrada(self):
         return self.__camada_entrada
@@ -92,5 +97,5 @@ class RedeNeural:
         self.__n = taxa_nova
 
 if __name__ == "__main__":
-    RNA = RedeNeural(2, 1)
+    RNA = RedeNeural(2, 1, 1)
     RNA.treinar_rede(0, cientista_e_compositores)

@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "python": "./venv/bin/python"
+            "python": "./venv/Scripts/python.exe"
         }
     ]
 }

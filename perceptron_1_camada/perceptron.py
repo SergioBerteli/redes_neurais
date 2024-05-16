@@ -12,6 +12,13 @@ class Neuronio:
         self.__x_i = x_i # Define o valor do neurônio
         self.__sinapses = zeros((n_ligacoes,), dtype=int) # define os pesos sinápticos que começarão em 0
     
+    def ajusta_pesos(self, taxa_aprendizado, erro):
+        novos_pesos = []
+        for index, sinapse in enumerate(self.getSinapses()):
+            novos_pesos = sinapse + erro[index] * taxa_aprendizado * self.getX_i
+        
+        self.setSinapses(novos_pesos)
+
     def setX_i(self, x_i: float) -> None:
         self.__x_i = x_i
 
@@ -20,12 +27,15 @@ class Neuronio:
     
     def getSinapses(self):
         return self.__sinapses
-        
+    
+    def setSinapses(self, sinapses):
+        self.__sinapses = sinapses
 
 
 
 class RedeNeural:
-    def __init__(self, i_neuronios, o_neuronios) -> None:
+    def __init__(self, i_neuronios, o_neuronios, taxa_aprendizado) -> None:
+        self.__n = taxa_aprendizado
         self.__camada_entrada = []
         self.__camada_entrada.append(Neuronio(o_neuronios, 1)) # Bias
         for _ in range(i_neuronios):
@@ -43,27 +53,43 @@ class RedeNeural:
             for sample in dataset:
                 self.insere_entrada(sample[0])
                 self.gera_saida()
+                # backpropagation
+                erro = array(sample[1] - self.getCamadaSaida()) # calculo de erro para backpropagation TODO
+                
     
     def gera_saida(self):
         entradas = self.getCamadaEntrada()
         matriz_pesos =  stack([neuronio.getSinapses() for neuronio in entradas], axis=-1)
         vetor_valores_n = array([neuronio.getX_i() for neuronio in self.getCamadaEntrada()])
         saida = matriz_pesos @ vetor_valores_n
-        print(saida)
-        pass
+        self.insere_saida(saida)
         
-
+    def ajusta_peso_neuronios(self, erro):
+        pass # TODO 
     
     def getCamadaEntrada(self):
         return self.__camada_entrada
+
+    def getCamadaSaida(self):
+        return self.__camada_saida
     
     def getNLigacoesEntrada(self):
         return self.__n_ligacoes_entrada
+    
+    def getTaxaAprendizado(self):
+        return self.__n
 
     def insere_entrada(self, data):
         for index, neuronio in enumerate(self.getCamadaEntrada()):
             if index != 0: # pulando o bias:
                 neuronio.setX_i(data[index - 1])
+
+    def insere_saida(self, data):
+        for index, neuronio in enumerate(self.getCamadaSaida()):
+            neuronio.setX_i(data[index])
+
+    def setTaxaAprendizado(self, taxa_nova):
+        self.__n = taxa_nova
 
 if __name__ == "__main__":
     RNA = RedeNeural(2, 1)

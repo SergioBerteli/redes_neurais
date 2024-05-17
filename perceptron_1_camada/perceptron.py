@@ -1,7 +1,7 @@
 from random import shuffle
-from numpy import zeros, array, stack
+from numpy import zeros, array, stack, atleast_1d, mean, absolute 
 from datasets.cientista_compositor import cientista_e_compositores
-from statistics import mean
+from datasets.logica_and import logica_and
 def funcao_ativacao(x) -> int:
     """
     Como função de ativação foi escolhida a função degrau
@@ -30,7 +30,7 @@ class Neuronio:
         return self.__sinapses
     
     def setSinapses(self, sinapses):
-        self.__sinapses = sinapses
+        self.__sinapses = atleast_1d(sinapses)
 
 
 
@@ -50,22 +50,24 @@ class RedeNeural:
         erro_conj_per = 100
         while erro_conj_max < erro_conj_per:
             erro_conj_array = []
-            shuffle(dataset)
+            # shuffle(dataset)
             for sample in dataset:
                 self.insere_entrada(sample[0])
-                self.gera_saida()
+                self.gerar_saida()
                 # backpropagation
                 erro = array(array(sample[1]) - array([neuronio.getX_i() for neuronio in self.getCamadaSaida()])) # calculo de erro para backpropagation TODO
                 self.ajusta_peso_neuronios(erro)
-                erro_conj_array.append(mean(erro))
+                erro_conj_array.append(absolute(mean(erro)))
             erro_conj_per = mean(erro_conj_array) * 100
                 
     
-    def gera_saida(self):
+    def gerar_saida(self):
         entradas = self.getCamadaEntrada()
         matriz_pesos =  stack([neuronio.getSinapses() for neuronio in entradas], axis=-1)
         vetor_valores_n = array([neuronio.getX_i() for neuronio in self.getCamadaEntrada()])
         saida = array(matriz_pesos @ vetor_valores_n)
+        saida = atleast_1d(saida) #garante que a saida terá pelo menos 1 dimensão
+        saida = array(list(map(funcao_ativacao, saida)))
         self.insere_saida(saida)
         
     def ajusta_peso_neuronios(self, erro):
@@ -95,7 +97,25 @@ class RedeNeural:
 
     def setTaxaAprendizado(self, taxa_nova):
         self.__n = taxa_nova
+    
+    def getValoresSaida(self):
+        saida_vals = []
+        for neuronio in self.getCamadaSaida():
+            saida_vals.append(neuronio.getX_i())
+        return saida_vals
 
-if __name__ == "__main__":
-    RNA = RedeNeural(2, 1, 1)
-    RNA.treinar_rede(0, cientista_e_compositores)
+    def testes(self, inp: list):
+        self.insere_entrada(inp)
+        self.gerar_saida()
+        return self.getValoresSaida()
+
+if __name__ == '__main__':
+    qtd_neuronios_entrada = 2
+    qtd_neuronios_saida = 1
+    taxa_aprendizado = 1
+    RNA = RedeNeural(qtd_neuronios_entrada, qtd_neuronios_saida, taxa_aprendizado)
+    RNA.treinar_rede(0, logica_and)
+    print("Rede treinada!")
+    while 1:
+        rep_bin = list(map(int, list(input("insira a representação binária: "))))
+        print(f"O resultado é {RNA.testes(rep_bin)}")

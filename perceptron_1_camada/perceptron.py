@@ -1,7 +1,6 @@
 from random import shuffle
 from numpy import zeros, array, stack, atleast_1d, mean, absolute 
-from datasets.cientista_compositor import cientista_e_compositores
-from datasets.logica_and import logica_and
+from datasets import logica_and
 def funcao_ativacao(x) -> int:
     """
     Como função de ativação foi escolhida a função degrau

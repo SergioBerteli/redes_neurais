@@ -1,0 +1,3 @@
+from .cientista_compositor import cientista_e_compositores
+from .autor_cientista_homem_mulher import autor_cient_m_f
+from .logica_and import logica_and

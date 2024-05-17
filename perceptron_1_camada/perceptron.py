@@ -1,6 +1,6 @@
 from random import shuffle
 from numpy import zeros, array, stack, atleast_1d, mean, absolute 
-from datasets import logica_and
+from datasets import logica_and, autor_cient_m_f, cientista_e_compositores
 def funcao_ativacao(x) -> int:
     """
     Como função de ativação foi escolhida a função degrau
@@ -15,7 +15,7 @@ class Neuronio:
     def ajusta_pesos(self, taxa_aprendizado, erro):
         novos_pesos = []
         for index, sinapse in enumerate(self.getSinapses()):
-            novos_pesos = sinapse + erro[index] * taxa_aprendizado * self.getX_i()
+            novos_pesos.append(sinapse + erro[index] * taxa_aprendizado * self.getX_i())
         
         self.setSinapses(novos_pesos)
 
@@ -110,10 +110,10 @@ class RedeNeural:
 
 if __name__ == '__main__':
     qtd_neuronios_entrada = 2
-    qtd_neuronios_saida = 1
+    qtd_neuronios_saida = 2
     taxa_aprendizado = 1
     RNA = RedeNeural(qtd_neuronios_entrada, qtd_neuronios_saida, taxa_aprendizado)
-    RNA.treinar_rede(0, logica_and)
+    RNA.treinar_rede(0, autor_cient_m_f)
     print("Rede treinada!")
     while 1:
         rep_bin = list(map(int, list(input("insira a representação binária: "))))

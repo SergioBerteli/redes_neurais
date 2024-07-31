@@ -1,6 +1,7 @@
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
-
+from PIL import Image
+import io
 from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
@@ -9,7 +10,7 @@ from PySide6.QtWidgets import (
     QStyle,
     QColorDialog,
 )
-from PySide6.QtCore import Qt, Slot, QStandardPaths
+from PySide6.QtCore import Qt, Slot, QStandardPaths, QBuffer
 from PySide6.QtGui import (
     QMouseEvent,
     QPaintEvent,
@@ -20,6 +21,7 @@ from PySide6.QtGui import (
     QPixmap,
     QIcon,
     QKeySequence,
+    QImage,
 )
 import sys
 import tensorflow as tf
@@ -156,8 +158,48 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def predict(self):
-        print(np.array(self.painter_widget.get_pixmap()).shape)
-    
+        pixmap = self.painter_widget.get_pixmap()
+        
+        qimage = pixmap.toImage()
+        # """
+        buffer = QBuffer()
+        buffer.open(QBuffer.ReadWrite)
+        qimage.save(buffer, "PNG")
+        
+        inp_img = tf.keras.utils.load_img(io.BytesIO(buffer.data()))
+
+        inp_img = tf.image.rgb_to_grayscale(inp_img)
+        inp_img = tf.image.resize(inp_img, [28, 28])
+        
+        inp_array = tf.keras.utils.img_to_array(inp_img)
+        inp_array = np.array([inp_array])
+        
+        prediction = model.predict(inp_array)
+        num = np.argmax(prediction)
+        print(prediction)
+        
+        print(f"O número na imagem é o {num}")
+        print(inp_array.shape)
+        new_img = Image.fromarray(inp_array[0])
+        new_img.show()
+        # """    
+        """
+        qimage = qimage.convertToFormat(QImage.Format.Format_Grayscale8)
+
+        width = qimage.width()
+        height = qimage.height()
+
+        ptr = qimage.bits()
+        arr = np.frombuffer(ptr, np.uint8).reshape((height, width)) 
+
+        print(arr.shape)
+        
+        inp_image = tf.image.resize(arr, [28, 28])
+        inp_image = np.array([inp_image])
+        print(inp_image.shape)
+        """
+
+
     @Slot()
     def on_save(self):
 

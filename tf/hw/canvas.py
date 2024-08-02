@@ -1,5 +1,6 @@
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+import matplotlib.pyplot as plt
 from PIL import Image
 import io
 from PySide6.QtWidgets import (
@@ -9,6 +10,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QStyle,
     QColorDialog,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt, Slot, QStandardPaths, QBuffer
 from PySide6.QtGui import (
@@ -21,13 +23,13 @@ from PySide6.QtGui import (
     QPixmap,
     QIcon,
     QKeySequence,
-    QImage,
 )
 import sys
 import tensorflow as tf
 import numpy as np
+import cv2
 
-model = tf.keras.models.load_model('model.keras')
+model = tf.keras.models.load_model('teste.keras')
 
 class PainterWidget(QWidget):
     """A widget where user can draw with their mouse
@@ -46,7 +48,7 @@ class PainterWidget(QWidget):
         self.previous_pos = None
         self.painter = QPainter()
         self.pen = QPen()
-        self.pen.setWidth(10)
+        self.pen.setWidth(20)
         self.pen.setCapStyle(Qt.RoundCap)
         self.pen.setJoinStyle(Qt.RoundJoin)
 
@@ -169,35 +171,19 @@ class MainWindow(QMainWindow):
         inp_img = tf.keras.utils.load_img(io.BytesIO(buffer.data()))
 
         inp_img = tf.image.rgb_to_grayscale(inp_img)
+        inp_img = tf.bitwise.invert(inp_img)
         inp_img = tf.image.resize(inp_img, [28, 28])
-        
-        inp_array = tf.keras.utils.img_to_array(inp_img)
-        inp_array = np.array([inp_array])
-        
-        prediction = model.predict(inp_array)
+        #testes plot
+                
+        # plt.imshow(inp_img, cmap=plt.cm.binary)
+        # plt.show()
+        inp_img = np.array([inp_img])
+        prediction = model.predict(inp_img)
         num = np.argmax(prediction)
         print(prediction)
         
         print(f"O número na imagem é o {num}")
-        print(inp_array.shape)
-        new_img = Image.fromarray(inp_array[0])
-        new_img.show()
-        # """    
-        """
-        qimage = qimage.convertToFormat(QImage.Format.Format_Grayscale8)
-
-        width = qimage.width()
-        height = qimage.height()
-
-        ptr = qimage.bits()
-        arr = np.frombuffer(ptr, np.uint8).reshape((height, width)) 
-
-        print(arr.shape)
-        
-        inp_image = tf.image.resize(arr, [28, 28])
-        inp_image = np.array([inp_image])
-        print(inp_image.shape)
-        """
+        QMessageBox.information(self, "Número na imagem", f"O número desenhado na tela é o {num}")
 
 
     @Slot()
